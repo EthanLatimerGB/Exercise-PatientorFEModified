@@ -1,18 +1,30 @@
 import { State } from "./state";
-import { Patient } from "../types";
+import { Diagnosis, Patient } from "../types";
 
 type patientListActionType = {
     type: "SET_PATIENT_LIST";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload: Patient[];
+};
+
+type diagnosisListActionType = {
+    type: "SET_DIAGNOSIS_LIST";
+    payload: Diagnosis[];
 };
 
 export const setPatientList = (patientList: Patient[]): patientListActionType => {
     return { 
-        type: "SET_PATIENT_LIST", 
+        type: "SET_PATIENT_LIST",
         payload: patientList
     };
 };
+
+export const setDiagnosisList = (diagnosisList: Diagnosis[]): diagnosisListActionType => {
+    return {
+        type: "SET_DIAGNOSIS_LIST",
+        payload: diagnosisList
+    };
+};
+
 
 export type Action =
     {
@@ -26,6 +38,10 @@ export type Action =
   | {
         type: "SET_PATIENT";
         payload: Patient;
+  } 
+  | {
+        type: "SET_DIAGNOSIS_LIST";
+        payload: Diagnosis[];
   };
 
 
@@ -55,7 +71,18 @@ export const reducer = (state: State, action: Action): State => {
           ...state,
           currentPatient: action.payload
       };
+    case"SET_DIAGNOSIS_LIST":
+        return {
+            ...state,
+            diagnosislist: {
+                ...action.payload.reduce(
+                    (memo, diagnosis) => ({ ...memo, [diagnosis.code]: diagnosis}),
+                    {}
+                ),
+                ...state.diagnosislist
+            }
+        };
     default:
-      return state;
-  }
+        return state;
+    }
 };
