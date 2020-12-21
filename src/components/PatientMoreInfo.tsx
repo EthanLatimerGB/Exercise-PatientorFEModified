@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useStateValue } from "../state";
-import {  } from '../state/reducer';
-import {  Entry } from '../types';
+import { Entry } from '../types';
+import AddEntryModal, { EntryOmitted } from '../AddEntryModal/index';
 
 import Axios from 'axios';
-import { Icon, Header } from 'semantic-ui-react';
+import { Icon, Header, Button } from 'semantic-ui-react';
+import { apiBaseUrl } from '../constants';
 
 
 interface MoreInfoProps {
@@ -55,8 +56,11 @@ const GenderIcon: React.FC<PassingGenderProps> = (props) => {
     return null;
 };
 
+
+
 const DisplayEntries: React.FC<PassingEntryArray> = ({ entries }) => {
     const [{ diagnosislist }] = useStateValue();
+
     if(typeof entries === 'undefined') return <Header size="large">No entries</Header>;
     if(typeof diagnosislist === "undefined") return null;
 
@@ -68,6 +72,7 @@ const DisplayEntries: React.FC<PassingEntryArray> = ({ entries }) => {
             if(diagnosis.code === code){
                 return diagnosis;
             }
+            return null;
         });
 
         return <p>{codeDescription?.name}</p>;
@@ -117,6 +122,9 @@ const PatientMoreInfo: React.FC<MoreInfoProps> = (props) => {
     const [{ currentPatient }, dispatch] = useStateValue();
     const id = props.id;
 
+    const [modalOpen, setModalOpen] = React.useState<boolean>(false);
+    const [error, setError] = React.useState<string | undefined>();
+
     useEffect(() => {
         const requestSinglePatient = async () => {
             try {
@@ -135,6 +143,32 @@ const PatientMoreInfo: React.FC<MoreInfoProps> = (props) => {
         requestSinglePatient();
     }, []);
 
+    const closeModal = (): void => {
+        setModalOpen(false);
+        setError(undefined);
+    };
+
+    const handleEntrySubmission = async (values: EntryOmitted) => {
+        try {
+            await Axios.post<EntryOmitted>(`${apiBaseUrl}/patients/${id}/entries`, values);
+
+            //refreshes patient list
+            const { data: singularUpdatedPatient } = await Axios.get(`${apiBaseUrl}/patients/${id}`);
+            dispatch({ type: "SET_PATIENT", payload: singularUpdatedPatient});
+
+
+            closeModal();
+        }catch(error){
+            console.error(error.response.data);
+            setError(error.response.data.error);
+        }
+    };
+
+    const handleClose = (): void => {
+        setModalOpen(false);
+        setError(undefined);
+    };
+
     return(
         <div>
             <div>
@@ -147,6 +181,9 @@ const PatientMoreInfo: React.FC<MoreInfoProps> = (props) => {
                 <p>Date of Birth: {currentPatient?.dateOfBirth}</p>
 
                 <DisplayEntries entries={currentPatient?.entries}/>
+                
+                <Button onClick={() => setModalOpen(true)}>Add new Patient</Button>
+                <AddEntryModal modalOpen={modalOpen} onSubmit={handleEntrySubmission} error={error} onClose={handleClose}/>
             </div>
         </div>
     );

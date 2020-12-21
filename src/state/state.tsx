@@ -5,7 +5,7 @@ import { Action } from "./reducer";
 
 export type State = {
   patients: { [id: string]: Patient };
-  diagnosislist: { [id: string]: Diagnosis | undefined };
+  diagnosislist: { [id: string]: Diagnosis };
   currentPatient: Patient | null;
 };
 
